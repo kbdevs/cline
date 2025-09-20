@@ -85,6 +85,9 @@ interface ChatTextAreaProps {
 	shouldDisableFilesAndImages: boolean
 	onHeightChange?: (height: number) => void
 	onFocusChange?: (isFocused: boolean) => void
+	// Queue-related props
+	queuedMessagesCount?: number
+	clearQueue?: () => void
 }
 
 interface GitCommit {
@@ -277,6 +280,8 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 			shouldDisableFilesAndImages,
 			onHeightChange,
 			onFocusChange,
+			queuedMessagesCount = 0,
+			clearQueue,
 		},
 		ref,
 	) => {
@@ -1685,10 +1690,21 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 								}}
 							/> */}
 							<div
-								className={`input-icon-button ${sendingDisabled ? "disabled" : ""} codicon codicon-send`}
+								className={`input-icon-button ${sendingDisabled ? (queuedMessagesCount > 0 ? "queuing" : "disabled") : ""} codicon ${
+									sendingDisabled && queuedMessagesCount > 0 ? "codicon-inbox" : "codicon-send"
+								}`}
 								data-testid="send-button"
+								title={
+									sendingDisabled
+										? queuedMessagesCount > 0
+											? `${queuedMessagesCount} message(s) queued`
+											: "AI is active"
+										: "Send message"
+								}
 								onClick={() => {
-									if (!sendingDisabled) {
+									// Always allow clicking when there's content to send or queue
+									const hasContent = inputValue.trim() || selectedImages.length > 0 || selectedFiles.length > 0
+									if (hasContent) {
 										setIsTextAreaFocused(false)
 										onSend()
 									}

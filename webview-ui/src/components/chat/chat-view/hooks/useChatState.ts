@@ -1,6 +1,6 @@
 import { ClineMessage } from "@shared/ExtensionMessage"
 import { useCallback, useMemo, useRef, useState } from "react"
-import { ChatState } from "../types/chatTypes"
+import { ChatState, QueuedMessage } from "../types/chatTypes"
 
 /**
  * Custom hook for managing chat state
@@ -20,6 +20,9 @@ export function useChatState(messages: ClineMessage[]): ChatState {
 	const [primaryButtonText, setPrimaryButtonText] = useState<string | undefined>("Approve")
 	const [secondaryButtonText, setSecondaryButtonText] = useState<string | undefined>("Reject")
 	const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({})
+
+	// Queue state
+	const [queuedMessages, setQueuedMessages] = useState<QueuedMessage[]>([])
 
 	// Refs
 	const textAreaRef = useRef<HTMLTextAreaElement>(null)
@@ -41,6 +44,7 @@ export function useChatState(messages: ClineMessage[]): ChatState {
 		setActiveQuote(null)
 		setSelectedImages([])
 		setSelectedFiles([])
+		setQueuedMessages([]) // Clear queue when resetting
 	}, [])
 
 	// Handle focus change
@@ -70,6 +74,10 @@ export function useChatState(messages: ClineMessage[]): ChatState {
 		setSecondaryButtonText,
 		expandedRows,
 		setExpandedRows,
+
+		// Queue state
+		queuedMessages,
+		setQueuedMessages,
 
 		// Refs
 		textAreaRef,

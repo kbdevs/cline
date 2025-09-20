@@ -36,9 +36,25 @@ export const InputSection: React.FC<InputSectionProps> = ({
 		setSelectedFiles,
 		textAreaRef,
 		handleFocusChange,
+		queuedMessages,
 	} = chatState
 
 	const { isAtBottom, scrollToBottomAuto } = scrollBehavior
+
+	// Handle send or queue based on sending state
+	const handleSendOrQueue = () => {
+		if (sendingDisabled) {
+			// Add to queue when AI is active
+			messageHandlers.addToQueue(inputValue, selectedImages, selectedFiles)
+			// Clear input immediately to give feedback that message was queued
+			setInputValue("")
+			setSelectedImages([])
+			setSelectedFiles([])
+		} else {
+			// Send normally when AI is available
+			messageHandlers.handleSendMessage(inputValue, selectedImages, selectedFiles)
+		}
+	}
 
 	return (
 		<>
@@ -52,6 +68,42 @@ export const InputSection: React.FC<InputSectionProps> = ({
 				</div>
 			)}
 
+			{queuedMessages.length > 0 && (
+				<div
+					style={{
+						marginBottom: "-8px",
+						marginTop: "5px",
+						padding: "4px 8px",
+						backgroundColor: "var(--vscode-statusBar-debuggingBackground)",
+						color: "var(--vscode-statusBar-debuggingForeground)",
+						borderRadius: "4px",
+						fontSize: "12px",
+						display: "flex",
+						alignItems: "center",
+						justifyContent: "space-between",
+					}}>
+					<span>
+						📬 {queuedMessages.length} message{queuedMessages.length === 1 ? "" : "s"} queued
+					</span>
+					{messageHandlers.clearQueue && (
+						<button
+							onClick={messageHandlers.clearQueue}
+							style={{
+								background: "none",
+								border: "none",
+								color: "inherit",
+								cursor: "pointer",
+								fontSize: "12px",
+								padding: "2px 4px",
+								borderRadius: "2px",
+							}}
+							title="Clear queue">
+							✕
+						</button>
+					)}
+				</div>
+			)}
+
 			<ChatTextArea
 				activeQuote={activeQuote}
 				inputValue={inputValue}
@@ -62,7 +114,7 @@ export const InputSection: React.FC<InputSectionProps> = ({
 					}
 				}}
 				onSelectFilesAndImages={selectFilesAndImages}
-				onSend={() => messageHandlers.handleSendMessage(inputValue, selectedImages, selectedFiles)}
+				onSend={handleSendOrQueue}
 				placeholderText={placeholderText}
 				ref={textAreaRef}
 				selectedFiles={selectedFiles}
@@ -72,6 +124,8 @@ export const InputSection: React.FC<InputSectionProps> = ({
 				setSelectedFiles={setSelectedFiles}
 				setSelectedImages={setSelectedImages}
 				shouldDisableFilesAndImages={shouldDisableFilesAndImages}
+				queuedMessagesCount={queuedMessages.length}
+				clearQueue={messageHandlers.clearQueue}
 			/>
 		</>
 	)

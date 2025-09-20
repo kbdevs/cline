@@ -17,6 +17,16 @@ export interface ChatViewProps {
 }
 
 /**
+ * Queued message interface
+ */
+export interface QueuedMessage {
+	text: string
+	images: string[]
+	files: string[]
+	timestamp: number
+}
+
+/**
  * Chat state interface
  */
 export interface ChatState {
@@ -41,6 +51,9 @@ export interface ChatState {
 	setSecondaryButtonText: React.Dispatch<React.SetStateAction<string | undefined>>
 	expandedRows: Record<number, boolean>
 	setExpandedRows: React.Dispatch<React.SetStateAction<Record<number, boolean>>>
+	// Queued messages
+	queuedMessages: QueuedMessage[]
+	setQueuedMessages: React.Dispatch<React.SetStateAction<QueuedMessage[]>>
 
 	// Refs
 	textAreaRef: React.RefObject<HTMLTextAreaElement>
@@ -70,6 +83,9 @@ export interface MessageHandlers {
 	handleSendMessage: (text: string, images: string[], files: string[]) => Promise<void>
 	handleTaskCloseButtonClick: () => void
 	startNewTask: () => Promise<void>
+	// Queue management
+	addToQueue: (text: string, images: string[], files: string[]) => void
+	clearQueue: () => void
 }
 
 /**

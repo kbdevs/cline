@@ -1,10 +1,10 @@
 import type { ClineMessage } from "@shared/ExtensionMessage"
 import { EmptyRequest, StringRequest } from "@shared/proto/cline/common"
 import { AskResponseRequest, NewTaskRequest } from "@shared/proto/cline/task"
-import { useCallback } from "react"
+import { useCallback, useEffect } from "react"
 import { SlashServiceClient, TaskServiceClient } from "@/services/grpc-client"
 import type { ButtonActionType } from "../shared/buttonConfig"
-import type { ChatState, MessageHandlers } from "../types/chatTypes"
+import type { ChatState, MessageHandlers, QueuedMessage } from "../types/chatTypes"
 
 /**
  * Custom hook for managing message handlers
@@ -19,8 +19,11 @@ export function useMessageHandlers(messages: ClineMessage[], chatState: ChatStat
 		setSelectedFiles,
 		setSendingDisabled,
 		setEnableButtons,
+		sendingDisabled,
 		clineAsk,
 		lastMessage,
+		queuedMessages,
+		setQueuedMessages,
 	} = chatState
 
 	// Handle sending a message
@@ -96,6 +99,46 @@ export function useMessageHandlers(messages: ClineMessage[], chatState: ChatStat
 			chatState,
 		],
 	)
+
+	// Queue management functions
+	const addToQueue = useCallback(
+		(text: string, images: string[], files: string[]) => {
+			const queuedMessage: QueuedMessage = {
+				text,
+				images,
+				files,
+				timestamp: Date.now(),
+			}
+			setQueuedMessages(prev => [...prev, queuedMessage])
+			console.log("[MessageHandlers] Added message to queue:", queuedMessage)
+		},
+		[setQueuedMessages],
+	)
+
+	const clearQueue = useCallback(() => {
+		setQueuedMessages([])
+		console.log("[MessageHandlers] Queue cleared")
+	}, [setQueuedMessages])
+
+	// Process next queued message
+	const processQueuedMessage = useCallback(
+		async (queuedMessage: QueuedMessage) => {
+			console.log("[MessageHandlers] Processing queued message:", queuedMessage)
+			await handleSendMessage(queuedMessage.text, queuedMessage.images, queuedMessage.files)
+		},
+		[handleSendMessage],
+	)
+
+	// Monitor sendingDisabled and process queue when it becomes false
+	useEffect(() => {
+		if (!sendingDisabled && queuedMessages.length > 0) {
+			const nextMessage = queuedMessages[0]
+			// Remove the message from queue first to prevent re-processing
+			setQueuedMessages(prev => prev.slice(1))
+			// Process the message
+			processQueuedMessage(nextMessage)
+		}
+	}, [sendingDisabled, queuedMessages, processQueuedMessage, setQueuedMessages])
 
 	// Start a new task
 	const startNewTask = useCallback(async () => {
@@ -238,5 +281,7 @@ export function useMessageHandlers(messages: ClineMessage[], chatState: ChatStat
 		executeButtonAction,
 		handleTaskCloseButtonClick,
 		startNewTask,
+		addToQueue,
+		clearQueue,
 	}
 }

@@ -163,6 +163,15 @@ vscode-dropdown::part(listbox) {
 .input-icon-button.disabled:hover {
 	opacity: 0.4;
 }
+.input-icon-button.queuing {
+	cursor: pointer;
+	opacity: 0.8;
+	color: var(--vscode-notificationCenterHeader-background);
+}
+.input-icon-button.queuing:hover {
+	opacity: 1;
+	color: var(--vscode-notificationCenterHeader-foreground);
+}
 
 /* Context mentions */
 
